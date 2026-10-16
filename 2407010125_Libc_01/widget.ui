@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Widget</class>
- <widget class="QWidget" name="Widget">
+ <class>studentInfoList</class>
+ <widget class="QWidget" name="studentInfoList">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -38,7 +38,7 @@
        <item row="1" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QRadioButton" name="maleRadioo">
+          <widget class="QRadioButton" name="maleRadio">
            <property name="text">
             <string>男</string>
            </property>
@@ -64,7 +64,7 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QSpinBox" name="ageSpain">
+        <widget class="QSpinBox" name="ageSpin">
          <property name="minimum">
           <number>15</number>
          </property>
@@ -173,14 +173,14 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="clearBtn">
+        <widget class="QPushButton" name="submitBtn_2">
          <property name="text">
           <string>提交</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="submitBtn">
+        <widget class="QPushButton" name="clearBtn">
          <property name="text">
           <string>清空</string>
          </property>
