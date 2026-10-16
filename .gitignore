@@ -1,0 +1,23 @@
+# Qt Creator 构建目录
+build/
+build-*/
+
+# Qt Creator 本机配置（编译套件路径，换电脑就失效）
+*.pro.user
+*.pro.user.*
+*.user
+
+# 编译产物
+*.o
+*.obj
+*.exe
+*.dll
+*.a
+*.lib
+Makefile*
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+debug/
+release/
+.qmake.stash
