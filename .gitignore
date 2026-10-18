@@ -21,3 +21,7 @@ qrc_*.cpp
 debug/
 release/
 .qmake.stash
+
+# Qt Creator 自动备份文件
+*.autosave
+coding笔记.md

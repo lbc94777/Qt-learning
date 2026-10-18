@@ -4,8 +4,9 @@
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class Widget;
+namespace Ui
+{
+    class Widget;
 }
 QT_END_NAMESPACE
 
@@ -16,6 +17,10 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+
+private slots:       // 槽函数
+    void onSubmit(); // 点"提交"Btn时调用
+    void onClear();  // 点"清空"Btn时调用
 
 private:
     Ui::Widget *ui;
