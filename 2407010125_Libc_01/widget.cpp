@@ -2,14 +2,20 @@
 #include "ui_widget.h"
 #include <QMessageBox>
 #include <QStringList>
+#include <QIcon>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent), ui(new Ui::Widget)
 {
     ui->setupUi(this); // 创建控件
+
+    setWindowFlags(Qt::Window|Qt::CustomizeWindowHint|Qt::WindowTitleHint|Qt::WindowMaximizeButtonHint|Qt::WindowCloseButtonHint);
+
+    setWindowIcon(QIcon(":/icons/app.png"));
+
     connect(ui->submitBtn, &QPushButton::clicked, this, &Widget::onSubmit);
     connect(ui->clearBtn, &QPushButton::clicked, this, &Widget::onClear);
-};
+}
 
 Widget::~Widget()
 {
