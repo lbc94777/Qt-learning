@@ -1,8 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QPlainTextEdit>
 #include <QMainWindow>
+#include "CodeEditor.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -21,11 +21,13 @@ public:
 
 private slots:
     void onNewFile();           // 新建文件
+    void onOpenFile();          // 打开文件
+    void onSaveFile();          // 保存文件
     void onCloseTab(int index); // 关闭标签页
 
 private:
     int m_untitledCount = 0;
     Ui::MainWindow *ui;
-    QPlainTextEdit *currentEditor(); // 得到MainWindow内当前正打开的标签页
+    CodeEditor *currentEditor(); // 得到当前标签页里面的编辑器,没有标签页时返回nullptr
 };
 #endif // MAINWINDOW_H
