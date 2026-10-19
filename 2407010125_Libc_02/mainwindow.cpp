@@ -16,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionSave->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
     ui->actionNew->setIcon(style()->standardIcon(QStyle::SP_FileIcon));
 
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::updateActions);
+
     // 文件菜单栏
     connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onNewFile);   // New
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenFile); // Open
@@ -40,11 +42,25 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 标签页:用户点×号时发出请求,由onCloseTab决定怎么关
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onCloseTab);
+
+    updateActions(); // 构造函数最后手动调用,让非法的动作按钮灰掉
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::updateActions()
+{
+    bool hasEditor=(currentEditor()!=nullptr);
+    ui->actionUndo->setEnabled(hasEditor);
+   ui->actionRedo->setEnabled(hasEditor);
+ ui->actionCut->setEnabled(hasEditor);
+ ui->actionCopy->setEnabled(hasEditor);
+ ui->actionPaste->setEnabled(hasEditor);
+ui->actionSave->setEnabled(hasEditor);
+ui->actionSaveAs->setEnabled(hasEditor);
 }
 
 void MainWindow::onNewFile()
@@ -93,3 +109,5 @@ CodeEditor *MainWindow::currentEditor()
 {
     return qobject_cast<CodeEditor *>(ui->tabWidget->currentWidget());
 }
+
+// 文件:新建文件,关闭标签页,打开文件,保存文件,另存为,退出 编辑:撤销,重做,剪切,复制,粘贴

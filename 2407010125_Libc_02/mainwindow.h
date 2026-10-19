@@ -24,6 +24,7 @@ private slots:
     void onOpenFile();          // 打开文件
     void onSaveFile();          // 保存文件
     void onCloseTab(int index); // 关闭标签页
+    void updateActions();
 
 private:
     int m_untitledCount = 0;
