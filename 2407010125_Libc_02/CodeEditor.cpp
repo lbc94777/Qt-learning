@@ -28,7 +28,7 @@ bool CodeEditor::saveFile(const QString &path)
   QTextStream out(&file);
   out << toPlainText(); // 先清空,再写入
   m_filePath = path;
-  document()->setModified(false); // save后设回未修改过的状态
+  this->document()->setModified(false); // save后设回未修改过的状态,必须要有这个状态改变,true->false
   return true;
 }
 

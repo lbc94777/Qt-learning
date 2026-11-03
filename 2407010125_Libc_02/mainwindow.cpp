@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QCloseEvent>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -89,7 +90,7 @@ bool MainWindow::saveEditorAs(CodeEditor *e)
         return false;
     }
 
-    updateTabTitle(e);                        // 文件名变了；如果之前没有改动，修改状态不变，不会触发信号，所以要手动更新
+    updateTabTitle(e); // 文件名变了；如果之前没有改动，修改状态不变，不会触发信号，所以要手动更新
     ui->statusbar->showMessage("已保存：" + path, 2000);
     return true;
 }
@@ -130,19 +131,10 @@ void MainWindow::onSaveAsFile()
 void MainWindow::onCloseTab(int index)
 {
     CodeEditor *editor = qobject_cast<CodeEditor *>(ui->tabWidget->widget(index)); // 取出页面
-    if (editor && editor->document()->isModified())
-    {
-        ui->tabWidget->setCurrentIndex(index); // 先切换过去，让用户看清问的是哪个文件
 
-        QMessageBox::StandardButton ret = QMessageBox::question(
-            this, "保存修改",
-            QString("「%1」已修改,是否保存?").arg(editor->displayName()), // 不用 tabText，它带着 *
-            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        if (ret == QMessageBox::Cancel)
-            return; // 取消,不关闭这个标签
-        if (ret == QMessageBox::Save && !saveEditor(editor))
-            return; // 选了保存但没有保存成功：也不关闭，内容不能丢
-        // 走到这里说明：选了「不保存」，或者已经保存成功了
+    if (editor && !maybeSave(editor))
+    {
+        return;
     }
     QWidget *page = ui->tabWidget->widget(index); // 先取出页面，必须在 removeTab 之前
     ui->tabWidget->removeTab(index);              // 这是从标签栏移除,页面对象还在
@@ -174,8 +166,39 @@ void MainWindow::updateTabTitle(CodeEditor *e)
     }
     ui->tabWidget->setTabText(idx, title); // 算出来的文字要设置到标签上才会显示
     ui->tabWidget->setTabToolTip(idx, e->filePath().isEmpty() ? e->displayName() : e->filePath());
-    /*
-    1.有文件(CodeEditor)就有title:newFile,OpenFile,save(as)File,
-    2.title还有状态--*:未保存状态有,其他无
-    */
+}
+bool MainWindow::maybeSave(CodeEditor *editor)
+{
+    ui->tabWidget->setCurrentWidget(editor); // 先切换过去，让用户看清问的是哪个文件
+    if (editor->document()->isModified())
+    {
+
+        QMessageBox::StandardButton ret = QMessageBox::question(
+            this, "保存修改",
+            QString("「%1」已修改,是否保存?").arg(editor->displayName()), // 不用 tabText，它带着 *
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        if (ret == QMessageBox::Cancel)
+            return false; // 取消,不关闭这个标签
+        if (ret == QMessageBox::Save && !saveEditor(editor))
+            return false; // 选了保存但没有保存成功：也不关闭，内容不能丢
+                          // 走到这里说明：选了「不保存」，或者已经保存成功了
+    }
+    return true;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    for (int i = 0; i < ui->tabWidget->count(); ++i)
+    {
+        CodeEditor *e = qobject_cast<CodeEditor *>(ui->tabWidget->widget(i));
+        if (e)
+        {
+            if (!maybeSave(e))
+            {
+                event->ignore();
+                return;
+            }
+        }
+    }
+    event->accept();
 }
