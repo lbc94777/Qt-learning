@@ -66,15 +66,6 @@ void MainWindow::updateActions()
 
 bool MainWindow::saveEditor(CodeEditor *editor)
 {
-    /*
-    1.得到路径
-    2.无路径?提示用户选择路径
-    3.另存为
-    4.更新标签
-    5.返回成功与否
-
-    */
-
     if (editor->filePath().isEmpty())
         return saveEditorAs(editor);           // 未命名文件，先让用户选择保存位置
     if (!editor->saveFile(editor->filePath())) // 转给最底层,让CodeEditor(编辑器)与指定path配合写入编辑器内容
@@ -85,33 +76,29 @@ bool MainWindow::saveEditor(CodeEditor *editor)
     ui->statusbar->showMessage("已保存：" + editor->filePath(), 2000);
     return true;
 }
-bool MainWindow::saveEditorAs(CodeEditor *editor)
+bool MainWindow::saveEditorAs(CodeEditor *e)
 {
-    QString path = QFileDialog::getSaveFileName(this, "另存为", editor->filePath(),
+    QString path = QFileDialog::getSaveFileName(this, "另存为", e->filePath(),
                                                 "C/C++ 文件 (*.c *.cpp *.h *.hpp);;所有文件 (*)");
     if (path.isEmpty())
         return false; // 用户点了取消，也算没有保存成功
 
-    if (!editor->saveFile(path))
+    if (!e->saveFile(path))
     {
         QMessageBox::warning(this, "保存失败", "无法写入文件：\n" + path);
         return false;
     }
 
-    int idx = ui->tabWidget->indexOf(editor); // 按编辑器反查标签下标，不一定是当前页
-    ui->tabWidget->setTabText(idx, QFileInfo(path).fileName());
-    ui->tabWidget->setTabToolTip(idx, path);
+    updateTabTitle(e);                        // 文件名变了；如果之前没有改动，修改状态不变，不会触发信号，所以要手动更新
     ui->statusbar->showMessage("已保存：" + path, 2000);
     return true;
 }
 void MainWindow::onNewFile()
 {
     m_untitledCount++;
-    CodeEditor *newone = new CodeEditor;
-    QString title = "未命名-" + QString::number(m_untitledCount);
-    int idx = ui->tabWidget->addTab(newone, title); // 新增的加入标签页,由tabWidget接管
-    ui->tabWidget->setCurrentIndex(idx);            // 自动切换到新标签
-    newone->setFocus();                             // 光标放进编辑器内,可以直接打字
+    CodeEditor *e = new CodeEditor;
+    e->setUntitledName("未命名-" + QString::number(m_untitledCount)); // 名字交给编辑器自己记住
+    addEditorTab(e);
 }
 
 void MainWindow::onOpenFile()
@@ -126,10 +113,7 @@ void MainWindow::onOpenFile()
         delete editor;
         return;
     }
-    int idx = ui->tabWidget->addTab(editor, QFileInfo(path).fileName());
-    ui->tabWidget->setTabToolTip(idx, path);
-    ui->tabWidget->setCurrentIndex(idx);
-    editor->setFocus();
+    addEditorTab(editor);
 }
 void MainWindow::onSaveFile()
 {
@@ -152,7 +136,7 @@ void MainWindow::onCloseTab(int index)
 
         QMessageBox::StandardButton ret = QMessageBox::question(
             this, "保存修改",
-            QString("「%1」已修改,是否保存?").arg(ui->tabWidget->tabText(index)),
+            QString("「%1」已修改,是否保存?").arg(editor->displayName()), // 不用 tabText，它带着 *
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
         if (ret == QMessageBox::Cancel)
             return; // 取消,不关闭这个标签
@@ -169,4 +153,29 @@ CodeEditor *MainWindow::currentEditor()
     return qobject_cast<CodeEditor *>(ui->tabWidget->currentWidget());
 }
 
-// 文件:新建文件,关闭标签页,打开文件,保存文件,另存为,退出 编辑:撤销,重做,剪切,复制,粘贴
+void MainWindow::addEditorTab(CodeEditor *e)
+{
+    int idx = ui->tabWidget->addTab(e, QString()); // 标签先留空
+    connect(e->document(), &QTextDocument::modificationChanged, this, [this, e]()
+            { updateTabTitle(e); });
+    updateTabTitle(e); // 必须在 addTab 之后，否则 indexOf 找不到它
+    ui->tabWidget->setCurrentIndex(idx);
+    e->setFocus();
+}
+void MainWindow::updateTabTitle(CodeEditor *e)
+{
+    int idx = ui->tabWidget->indexOf(e);
+    if (idx < 0)
+        return;
+    QString title = e->displayName();
+    if (e->document()->isModified())
+    {
+        title += " *";
+    }
+    ui->tabWidget->setTabText(idx, title); // 算出来的文字要设置到标签上才会显示
+    ui->tabWidget->setTabToolTip(idx, e->filePath().isEmpty() ? e->displayName() : e->filePath());
+    /*
+    1.有文件(CodeEditor)就有title:newFile,OpenFile,save(as)File,
+    2.title还有状态--*:未保存状态有,其他无
+    */
+}

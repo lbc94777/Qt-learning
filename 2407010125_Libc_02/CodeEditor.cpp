@@ -1,5 +1,6 @@
 #include "CodeEditor.h"
 #include <QFile>
+#include <QFileInfo>
 #include <QTextStream>
 #include <QFont>
 
@@ -14,10 +15,9 @@ bool CodeEditor::loadFile(const QString &path) // 逻辑:接收filepath,然后�
   if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     return false;
   QTextStream in(&file);
-  QString content = in.readAll();
-  this->setPlainText(content);
+  setPlainText(in.readAll());
   m_filePath = path;
-  this->document()->setModified(false);
+  this->document()->setModified(false);//load文件设置成未修改
   return true;
 }
 bool CodeEditor::saveFile(const QString &path)
@@ -30,4 +30,11 @@ bool CodeEditor::saveFile(const QString &path)
   m_filePath = path;
   document()->setModified(false); // save后设回未修改过的状态
   return true;
+}
+
+QString CodeEditor::displayName() const
+{
+    if(m_filePath.isEmpty())
+        return m_untitledName;
+    return QFileInfo(m_filePath).fileName();
 }

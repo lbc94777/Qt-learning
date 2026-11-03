@@ -31,7 +31,9 @@ private:
     int m_untitledCount = 0;
     Ui::MainWindow *ui;
     CodeEditor *currentEditor();           // 得到当前标签页里面的编辑器,没有标签页时返回nullptr
-    bool saveEditor(CodeEditor *editor);   // 保存指定的编辑器，没有路径时转到另存为；成功返回 true
-    bool saveEditorAs(CodeEditor *editor); // 让用户选择位置后保存；用户取消或保存失败返回 false
+    bool saveEditor(CodeEditor *e);   // 保存指定的编辑器，没有路径时转到另存为；成功返回 true
+    bool saveEditorAs(CodeEditor *e); // 让用户选择位置后保存；用户取消或保存失败返回 false
+    void addEditorTab(CodeEditor*e );//把编辑器放进标签页,并连接修改信号
+    void updateTabTitle(CodeEditor*e);//设置标签的名字和修改状态
 };
 #endif // MAINWINDOW_H
