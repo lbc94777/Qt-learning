@@ -22,7 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionNew, &QAction::triggered, this, &MainWindow::onNewFile);   // New
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenFile); // Open
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::onSaveFile); // Save
-    connect(ui->actionExit, &QAction::triggered, this, &MainWindow::close);      // Exit
+    connect(ui->actionSaveAs, &QAction::triggered, this, &MainWindow::onSaveAsFile);
+    connect(ui->actionExit, &QAction::triggered, this, &MainWindow::close); // Exit
 
     // 编辑菜单栏:信号到来时才去取当前编辑器,没有标签页时什么也不做
     connect(ui->actionCut, &QAction::triggered, this, [this]()
@@ -53,16 +54,56 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateActions()
 {
-    bool hasEditor=(currentEditor()!=nullptr);
+    bool hasEditor = (currentEditor() != nullptr);
     ui->actionUndo->setEnabled(hasEditor);
-   ui->actionRedo->setEnabled(hasEditor);
- ui->actionCut->setEnabled(hasEditor);
- ui->actionCopy->setEnabled(hasEditor);
- ui->actionPaste->setEnabled(hasEditor);
-ui->actionSave->setEnabled(hasEditor);
-ui->actionSaveAs->setEnabled(hasEditor);
+    ui->actionRedo->setEnabled(hasEditor);
+    ui->actionCut->setEnabled(hasEditor);
+    ui->actionCopy->setEnabled(hasEditor);
+    ui->actionPaste->setEnabled(hasEditor);
+    ui->actionSave->setEnabled(hasEditor);
+    ui->actionSaveAs->setEnabled(hasEditor);
 }
 
+bool MainWindow::saveEditor(CodeEditor *editor)
+{
+    /*
+    1.得到路径
+    2.无路径?提示用户选择路径
+    3.另存为
+    4.更新标签
+    5.返回成功与否
+
+    */
+
+    if (editor->filePath().isEmpty())
+        return saveEditorAs(editor);           // 未命名文件，先让用户选择保存位置
+    if (!editor->saveFile(editor->filePath())) // 转给最底层,让CodeEditor(编辑器)与指定path配合写入编辑器内容
+    {
+        QMessageBox::warning(this, "保存失败", "无法写入文件：\n" + editor->filePath());
+        return false;
+    }
+    ui->statusbar->showMessage("已保存：" + editor->filePath(), 2000);
+    return true;
+}
+bool MainWindow::saveEditorAs(CodeEditor *editor)
+{
+    QString path = QFileDialog::getSaveFileName(this, "另存为", editor->filePath(),
+                                                "C/C++ 文件 (*.c *.cpp *.h *.hpp);;所有文件 (*)");
+    if (path.isEmpty())
+        return false; // 用户点了取消，也算没有保存成功
+
+    if (!editor->saveFile(path))
+    {
+        QMessageBox::warning(this, "保存失败", "无法写入文件：\n" + path);
+        return false;
+    }
+
+    int idx = ui->tabWidget->indexOf(editor); // 按编辑器反查标签下标，不一定是当前页
+    ui->tabWidget->setTabText(idx, QFileInfo(path).fileName());
+    ui->tabWidget->setTabToolTip(idx, path);
+    ui->statusbar->showMessage("已保存：" + path, 2000);
+    return true;
+}
 void MainWindow::onNewFile()
 {
     m_untitledCount++;
@@ -92,19 +133,37 @@ void MainWindow::onOpenFile()
 }
 void MainWindow::onSaveFile()
 {
-    // QString path = ;
-    // auto *page = new QPlainTextEdit;
-    // page->saveFile()
+    if (CodeEditor *e = currentEditor())
+        saveEditor(e);
+}
+
+void MainWindow::onSaveAsFile()
+{
+    if (CodeEditor *e = currentEditor())
+        saveEditorAs(e);
 }
 
 void MainWindow::onCloseTab(int index)
 {
-    QWidget *page = ui->tabWidget->widget(index); // 取出页面
-    // TODO第二步,内容修改过时,弹出是否保存page
-    ui->tabWidget->removeTab(index); // 这是从标签栏移除,页面对象还在
-    page->deleteLater();             // 真正删除
-}
+    CodeEditor *editor = qobject_cast<CodeEditor *>(ui->tabWidget->widget(index)); // 取出页面
+    if (editor && editor->document()->isModified())
+    {
+        ui->tabWidget->setCurrentIndex(index); // 先切换过去，让用户看清问的是哪个文件
 
+        QMessageBox::StandardButton ret = QMessageBox::question(
+            this, "保存修改",
+            QString("「%1」已修改,是否保存?").arg(ui->tabWidget->tabText(index)),
+            QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        if (ret == QMessageBox::Cancel)
+            return; // 取消,不关闭这个标签
+        if (ret == QMessageBox::Save && !saveEditor(editor))
+            return; // 选了保存但没有保存成功：也不关闭，内容不能丢
+        // 走到这里说明：选了「不保存」，或者已经保存成功了
+    }
+    QWidget *page = ui->tabWidget->widget(index); // 先取出页面，必须在 removeTab 之前
+    ui->tabWidget->removeTab(index);              // 这是从标签栏移除,页面对象还在
+    page->deleteLater();                          // 真正删除
+}
 CodeEditor *MainWindow::currentEditor()
 {
     return qobject_cast<CodeEditor *>(ui->tabWidget->currentWidget());

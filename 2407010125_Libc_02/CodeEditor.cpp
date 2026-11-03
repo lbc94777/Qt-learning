@@ -22,6 +22,12 @@ bool CodeEditor::loadFile(const QString &path) // 逻辑:接收filepath,然后�
 }
 bool CodeEditor::saveFile(const QString &path)
 {
-  Q_UNUSED(path); // TODO:写入文件
-  return false;
+  QFile file(path);
+  if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    return false; // 保存失败(打不开,没有写入权限或者不是text),返回false
+  QTextStream out(&file);
+  out << toPlainText(); // 先清空,再写入
+  m_filePath = path;
+  document()->setModified(false); // save后设回未修改过的状态
+  return true;
 }

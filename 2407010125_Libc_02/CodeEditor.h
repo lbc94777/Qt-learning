@@ -6,7 +6,7 @@ class CodeEditor : public QPlainTextEdit
 {
     Q_OBJECT
 public:
-    explicit  CodeEditor(QWidget *parent = nullptr);
+    explicit CodeEditor(QWidget *parent = nullptr);
 
     QString filePath() const { return m_filePath; }
     bool loadFile(const QString &path); // 读取文件，成功返回 true
