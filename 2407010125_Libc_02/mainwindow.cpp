@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QCloseEvent>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -44,6 +45,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 标签页:用户点×号时发出请求,由onCloseTab决定怎么关
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onCloseTab);
+
+    setupDocks(); // 放置好左右下的docks
+
+    onNewFile();
 
     updateActions(); // 构造函数最后手动调用,让非法的动作按钮灰掉
 }
@@ -201,4 +206,29 @@ void MainWindow::closeEvent(QCloseEvent *event)
         }
     }
     event->accept();
+}
+
+void MainWindow::setupDocks()
+{
+    m_fileDock = new QDockWidget("文件树", this);
+    m_fileDock->setObjectName("fileDock");
+    m_fileDock->setWidget(new QLabel("这里以后放文件树"));
+    addDockWidget(Qt::LeftDockWidgetArea, m_fileDock);
+
+    m_infoDock = new QDockWidget("文件信息", this);
+    m_infoDock->setObjectName("fileInfoDock");
+    m_infoDock->setWidget(new QLabel("这里以后放文件信息"));
+    addDockWidget(Qt::RightDockWidgetArea, m_infoDock);
+
+    m_logDock = new QDockWidget("日志", this);
+    m_logDock->setObjectName("logsDock");
+    m_logDock->setWidget(new QLabel("这里以后放日志"));
+    addDockWidget(Qt::BottomDockWidgetArea, m_logDock);
+
+    ui->menuView->addAction(m_fileDock->toggleViewAction());
+    ui->menuView->addAction(m_infoDock->toggleViewAction());
+    ui->menuView->addAction(m_logDock->toggleViewAction());
+
+    resizeDocks({m_fileDock, m_infoDock}, {220, 240}, Qt::Horizontal); // 左右两个的宽度
+    resizeDocks({m_logDock}, {150}, Qt::Vertical);                     // 底部的高度
 }

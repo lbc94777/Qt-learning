@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "CodeEditor.h"
+#include <QDockWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -38,5 +39,9 @@ private:
     void addEditorTab(CodeEditor *e);   // 把编辑器放进标签页,并连接修改信号
     void updateTabTitle(CodeEditor *e); // 设置标签的名字和修改状态
     bool maybeSave(CodeEditor *e);      // 对于要关闭修改过的文件,弹出选项框
+    QDockWidget *m_fileDock = nullptr;
+    QDockWidget *m_infoDock = nullptr;
+    QDockWidget *m_logDock = nullptr;
+    void setupDocks();
 };
 #endif // MAINWINDOW_H
